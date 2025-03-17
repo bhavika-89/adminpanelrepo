@@ -1,54 +1,67 @@
-import { useState } from 'react';
+import React from 'react';
+import {
+  Box,
+  Button,
+  Container,
+  TextField,
+  Typography,
+  Paper,
+} from '@mui/material';
+import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const { register, handleSubmit, formState: { errors } } = useForm();
+  const { login } = useAuthStore();
   const navigate = useNavigate();
-  const login = useAuthStore((state) => state.login);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (data) => {
     try {
-      const res = await axios.post('https://fakestoreapi.com/auth/login', {
-        username,
-        password,
-      });
-
-      // Update Zustand state
-      login({ username }, res.data.token);
-
-      // ✅ Navigate to Dashboard
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Login failed:', error);
-      alert('Login failed. Try using username: mor_2314, password: 83r5^_');
+      const res = await login(data.username, data.password);
+      if (res.success) {
+        navigate('/dashboard');
+      } else {
+        alert('Invalid credentials');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      alert('Login failed');
     }
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          required
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
-    </div>
+    <Container maxWidth="sm">
+      <Paper elevation={3} sx={{ padding: 4, marginTop: 10 }}>
+        <Typography variant="h4" gutterBottom align="center">
+          Admin Login
+        </Typography>
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <TextField
+            label="Username"
+            fullWidth
+            margin="normal"
+            {...register('username', { required: 'Username is required' })}
+            error={!!errors.username}
+            helperText={errors.username?.message}
+          />
+          <TextField
+            label="Password"
+            fullWidth
+            margin="normal"
+            type="password"
+            {...register('password', { required: 'Password is required' })}
+            error={!!errors.password}
+            helperText={errors.password?.message}
+          />
+          <Box mt={2}>
+            <Button type="submit" variant="contained" fullWidth>
+              Login
+            </Button>
+          </Box>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 
